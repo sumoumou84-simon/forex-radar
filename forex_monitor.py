@@ -20,6 +20,11 @@ import yfinance as yf
 
 # 云端健康检查微服务 (供 Render / Railway / Koyeb 等云托管平台 24小时存活心跳使用)
 class CloudHealthHandler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html; charset=utf-8')
+        self.end_headers()
+
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html; charset=utf-8')
@@ -28,7 +33,7 @@ class CloudHealthHandler(BaseHTTPRequestHandler):
         <html>
         <head><title>TradingAgents Forex Radar Cloud Engine</title></head>
         <body style="font-family:Segoe UI, sans-serif; text-align:center; padding-top:60px; background:#0f172a; color:#f8fafc;">
-            <h1 style="color:#10b981;">⚡ TradingAgents 外汇行情雷达云端引擎 24/7 正在运行 ⚡</h1>
+            <h1 style="color:#10b981;">TradingAgents 外汇行情雷达云端引擎 24/7 正在运行</h1>
             <p style="color:#94a3b8;">系统已锁定 8 大直盘与交叉盘，行情触发将秒级推送至手机 Telegram。</p>
             <p style="font-size:12px; color:#64748b;">Powered by TradingAgents Forex Edition</p>
         </body>
