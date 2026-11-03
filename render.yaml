@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: forex-radar-cloud
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python forex_monitor.py
+    autoDeploy: true
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8811778752:AAE7QFo-jiOhOUSyJgMRXInLP6eYwF9P_C0
+      - key: TELEGRAM_CHAT_ID
+        value: "409951109"
