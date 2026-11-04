@@ -18,6 +18,12 @@ from dotenv import load_dotenv
 import requests
 import yfinance as yf
 
+# 确保在 Windows 控制台下支持 UTF-8 与 Emoji 正常打印
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # 云端健康检查微服务 (供 Render / Railway / Koyeb 等云托管平台 24小时存活心跳使用)
 class CloudHealthHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -55,7 +61,7 @@ def start_health_server():
     except Exception as e:
         print(f"[健康服务启动跳过]: {e}")
 
-# 加载 .env 环境变量（若云端未配置，则使用预设 Telegram 参数）
+# 加载 .env 环境变量
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8811778752:AAE7QFo-jiOhOUSyJgMRXInLP6eYwF9P_C0").strip()
@@ -69,6 +75,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "409951109").strip()
 MONITOR_RULES = {
     "GBPUSD=X": {
         "name": "GBP/USD (英镑/美元)",
+        "status": "STOPPED",  # 触及止损熔断，已停止监控
         "rules": [
             {
                 "id": "GBPUSD_SELL",
@@ -107,6 +114,7 @@ MONITOR_RULES = {
     },
     "EURUSD=X": {
         "name": "EUR/USD (欧元/美元)",
+        "status": "STOPPED",  # 触及止损熔断，已停止监控
         "rules": [
             {
                 "id": "EURUSD_SELL",
@@ -145,6 +153,7 @@ MONITOR_RULES = {
     },
     "USDJPY=X": {
         "name": "USD/JPY (美元/日元)",
+        "status": "ACTIVE",
         "rules": [
             {
                 "id": "USDJPY_BUY",
@@ -183,6 +192,7 @@ MONITOR_RULES = {
     },
     "AUDUSD=X": {
         "name": "AUD/USD (澳元/美元)",
+        "status": "ACTIVE",
         "rules": [
             {
                 "id": "AUDUSD_SELL",
@@ -221,6 +231,7 @@ MONITOR_RULES = {
     },
     "USDCAD=X": {
         "name": "USD/CAD (美元/加元)",
+        "status": "ACTIVE",
         "rules": [
             {
                 "id": "USDCAD_BUY",
@@ -259,6 +270,7 @@ MONITOR_RULES = {
     },
     "USDCHF=X": {
         "name": "USD/CHF (美元/瑞郎)",
+        "status": "ACTIVE",
         "rules": [
             {
                 "id": "USDCHF_BUY",
@@ -297,6 +309,7 @@ MONITOR_RULES = {
     },
     "EURGBP=X": {
         "name": "EUR/GBP (欧元/英镑)",
+        "status": "STOPPED",  # 触及止损熔断，已停止监控
         "rules": [
             {
                 "id": "EURGBP_SELL",
@@ -335,6 +348,7 @@ MONITOR_RULES = {
     },
     "NZDUSD=X": {
         "name": "NZD/USD (纽元/美元)",
+        "status": "ACTIVE",
         "rules": [
             {
                 "id": "NZDUSD_SELL",
@@ -484,26 +498,67 @@ def is_in_liquidity_hunt_period() -> tuple[bool, str]:
 def run_monitor(poll_interval: int = 30):
     """启动主监控轮询循环"""
     start_health_server()
+    
+    active_symbols = [f"{i['name']} ({s})" for s, i in MONITOR_RULES.items() if i.get("status") == "ACTIVE"]
+    stopped_symbols = [f"{i['name']} ({s})" for s, i in MONITOR_RULES.items() if i.get("status") == "STOPPED"]
+
     print("=" * 65)
     print("★ TradingAgents 外汇行情实时雷达 & Telegram 推送服务已启动 ★")
     print(f"轮询间隔: {poll_interval} 秒")
-    print(f"监控品种: {', '.join(MONITOR_RULES.keys())}")
+    print(f"🟢 正常追踪中 ({len(active_symbols)} 个品种):")
+    for s in active_symbols:
+        print(f"   • {s}")
+    if stopped_symbols:
+        print(f"🛑 已止损熔断/停止 ({len(stopped_symbols)} 个品种，自动跳过):")
+        for s in stopped_symbols:
+            print(f"   • {s}")
     print("时段风控: ★ 已开启机构洗盘时间锁 (15:30-17:15 欧盘刺杀期自动拦截入场)")
     print(f"Telegram Bot 配置: {'已配置' if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID else '未配置 (仅控制台打印)'}")
     print("=" * 65)
 
     while True:
         now_time = time.time()
-        for symbol, info in MONITOR_RULES.items():
+        for symbol, info in list(MONITOR_RULES.items()):
+            # 1. 状态机熔断检查：若已熔断停止，直接跳过，不再拉取价格、不再比对、不发通知
+            if info.get("status") == "STOPPED":
+                continue
+
             price = get_latest_price(symbol)
             if price is None:
                 continue
 
             print(f"[{datetime.now().strftime('%H:%M:%S')}] {info['name']}: {price:.5f}")
 
+            # 2. 遍历该品种策略规则
             for rule in info["rules"]:
                 rule_id = rule["id"]
                 if rule["condition"](price):
+                    # 【止损熔断机制 Stop Loss Circuit Breaker】
+                    # 一旦触碰或打穿止损，立即发送最后一条告警并永久熔断该品种
+                    if rule["type"] == "STOP_LOSS":
+                        info["status"] = "STOPPED"
+                        print("\n" + "!" * 55)
+                        print(f"🛑【止损熔断生效】{info['name']} 触碰止损点 {rule['stop_loss']}！监控已永久停止。")
+                        print("!" * 55)
+
+                        circuit_breaker_alert = (
+                            f"🚨 *【止损熔断生效 · 策略终止通知】*\n"
+                            f"━━━━━━━━━━━━━━━━━━\n"
+                            f"📊 *品种*：*{info['name']} ({symbol})*\n"
+                            f"💥 *当前触碰价格*：`{price:.5f}`\n"
+                            f"🛑 *止损点位*：`{rule['stop_loss']}`\n"
+                            f"━━━━━━━━━━━━━━━━━━\n"
+                            f"🚨 *{info['name']} 已触碰止损点 {rule['stop_loss']}，该品种策略已失效，监控已自动永久停止。*\n"
+                            f"━━━━━━━━━━━━━━━━━━\n"
+                            f"⚠️ *系统处置*：该品种状态已切换为 `STOPPED`，后续循环已自动剔除，不再比对行情，不再推送任何噪音。\n"
+                            f"💡 *风控研判*：{rule['logic']}\n\n"
+                            f"⏰ 熔断时间：`{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`\n"
+                            f"🤖 _TradingAgents AI 止损熔断守护系统_"
+                        )
+                        send_telegram_message(circuit_breaker_alert)
+                        last_alert_time[rule_id] = now_time
+                        break  # 跳出当前品种的其他规则判断
+
                     # 若是开新仓入场信号 (BUY/SELL)，必须接受时段安全拦截器检验
                     if rule["type"] in ["BUY_ZONE", "SELL_ZONE"]:
                         is_danger, reason = is_in_liquidity_hunt_period()
