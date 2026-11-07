@@ -393,8 +393,39 @@ ALERT_COOLDOWN_SECONDS = 45 * 60
 last_alert_time = {}
 
 
+def is_weekend_blackout_period() -> tuple[bool, str]:
+    """检查当前大马时间 (UTC+8) 是否处于周末闭市拦截黑洞期
+
+    时间窗口：周六 07:00 以后，直到周一 05:00 以前。
+    在此期间彻底封死 Telegram 消息发送通道，坚决拒绝任何网络请求与噪音轰炸。
+    """
+    from datetime import timezone, timedelta
+    myt = timezone(timedelta(hours=8))
+    now_myt = datetime.now(myt)
+    weekday = now_myt.weekday()  # 0=周一, 5=周六, 6=周日
+    hm = now_myt.hour * 100 + now_myt.minute
+
+    # 1. 周六 07:00 及以后 (美盘收盘清算完成)
+    if weekday == 5 and hm >= 700:
+        return True, f"周六闭市停信期 ({now_myt.strftime('%Y-%m-%d %H:%M:%S')} MYT)"
+    # 2. 周日全天
+    if weekday == 6:
+        return True, f"周日全天停信期 ({now_myt.strftime('%Y-%m-%d %H:%M:%S')} MYT)"
+    # 3. 周一 05:00 以前 (亚盘开市前)
+    if weekday == 0 and hm < 500:
+        return True, f"周一开盘前停信期 ({now_myt.strftime('%Y-%m-%d %H:%M:%S')} MYT)"
+
+    return False, ""
+
+
 def send_telegram_message(message: str) -> bool:
-    """发送消息到指定的 Telegram 频道或个人"""
+    """发送消息到指定的 Telegram 频道或个人 (含周末彻底硬拦截保护)"""
+    # 1. 硬性周末时间拦截：周六 07:00 以后 至 周一 05:00 以前，彻底封死发送通道，坚决不发 HTTP 请求！
+    is_blocked, reason = is_weekend_blackout_period()
+    if is_blocked:
+        print(f"🛑 [周末通道硬拦截] 处于【{reason}】，周末期间坚决拒绝向 Telegram API 发送任何请求！")
+        return False
+
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("[Telegram 未配置] 请先在 .env 中填入 TELEGRAM_BOT_TOKEN 和 TELEGRAM_CHAT_ID")
         return False
@@ -525,6 +556,13 @@ def run_monitor(poll_interval: int = 30):
             check_and_trigger_weekend_summary()
         except Exception as e:
             print(f"[周末闭市复盘检测跳过]: {e}")
+
+        # 检查是否处于周末静默停盘期 (周六 07:00 - 周一 05:00)
+        is_blackout, blackout_reason = is_weekend_blackout_period()
+        if is_blackout:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 💤 处于【{blackout_reason}】，全球外汇市场停盘静默中，停止行情轮询与消息推送 (心跳微服务保持运行)...")
+            time.sleep(poll_interval)
+            continue
 
         for symbol, info in list(MONITOR_RULES.items()):
             # 1. 状态机熔断检查：若已熔断停止，直接跳过，不再拉取价格、不再比对、不发通知
