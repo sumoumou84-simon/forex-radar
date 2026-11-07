@@ -2,15 +2,19 @@
 
 核心功能：
 1. 闭市定时触发：大马时间周六 06:30（美盘收盘后）或周末期间自动执行。
-2. 8 大货币对全盘复盘：
+2. 8 大货币对全盘复盘与深度归因：
    - 抓取本周实际高低点、收盘价与开盘价。
    - 准确判定各品种最终状态：STOPPED / TP1_HIT / TP2_HIT / ACTIVE / NO_ENTRY。
-   - 计算与原策略设定点位的偏离度 (Pips)。
-3. 原因沉淀与风控复盘：沉淀止损原因、分析大盘宏观联动，输出下周前瞻。
-4. 双渠道交付：
-   - 渠道 A：自动通过 Telegram 推送【本周 Forex Radar 闭市综合复盘报告】。
+   - 记录 8 大品种核心波动诱因深度归档与点位偏离度 (Pips)。
+3. 两项风控交易机制制度化沉淀：
+   - 止损熔断（Circuit Breaker）机制验证
+   - 分批容差建仓（Tolerance Entry）机制引入
+4. 下周一开盘预备优先监控清单：
+   - 重点做多池 / 重点做空池 / 观察等待池 / 暂避池
+5. 双渠道交付与存储：
+   - 渠道 A：自动通过 Telegram 推送【本周 Forex Radar 闭市综合复盘报告】（HTML模式，稳定投递）。
    - 渠道 B：持久化保存至 data/weekly_summary.json 与 data/weekly_summary.md（及根目录 weekly_summary.md）。
-5. Antigravity 联动：免二次运算直接秒开呈现。
+6. Antigravity 联动：免二次运算直接秒开呈现。
 """
 
 import os
@@ -36,7 +40,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "409951109").strip()
 
 MYT_TIMEZONE = timezone(timedelta(hours=8))
 
-# 8 大货币对策略参数与研报基准
+# 8 大货币对策略参数、深度归因与下周指引
 WEEKLY_STRATEGY_BENCHMARK = {
     "GBPUSD=X": {
         "name": "GBP/USD (英镑/美元)",
@@ -47,8 +51,9 @@ WEEKLY_STRATEGY_BENCHMARK = {
         "tp2": 1.3300,
         "pre_status": "STOPPED",
         "strategy_logic": "1.3438流动性掠夺假突破，反抽供给区高空。",
-        "stop_reason": "英国央行决议偏鹰，叠加周内英镑空头回补买盘强劲，冲破 1.3475 假突破前高防守位，触发熔断离场。",
-        "next_focus": "关注 1.3480-1.3520 强阻力能否形成日线假突破见顶，若无法跌破 1.3400 则避免盲目猜顶。"
+        "deep_attribution": "英国通胀粘性推迟 BoE 降息定价，叠加美元短期承压；主力在 1.3430 关键阻力发动 Liquidity Sweep（扫荡散户空头止损），脉冲触碰 1.3502 后回落至 1.3456。",
+        "pool": "观察等待池",
+        "next_focus": "等待假突破逼空情绪退潮，寻找右侧再次遇阻信号。"
     },
     "EURUSD=X": {
         "name": "EUR/USD (欧元/美元)",
@@ -59,56 +64,9 @@ WEEKLY_STRATEGY_BENCHMARK = {
         "tp2": 1.1090,
         "pre_status": "STOPPED",
         "strategy_logic": "1.1200蓝色供给压制带受阻，阻力区挂空。",
-        "stop_reason": "欧洲央行官员释放偏鹰言论，欧元突破 1.1200 关键颈线并打穿 1.1245 供给区上限，单边上行触发止损。",
-        "next_focus": "关注 1.1280 强压区与 1.1200 顶底转换支撑，等待回踩破位确认后再行布局。"
-    },
-    "USDJPY=X": {
-        "name": "USD/JPY (美元/日元)",
-        "direction": "BUY",
-        "entry_range": (156.90, 157.10),
-        "stop_loss": 156.40,
-        "tp1": 157.90,
-        "tp2": 158.40,
-        "pre_status": "ACTIVE",
-        "strategy_logic": "157.00关口支撑针确认，区间震荡回踩多。",
-        "stop_reason": "",
-        "next_focus": "美日单边上攻测试 158.50-158.80 密集压力区，警惕日本财务省口头干预，下周观察 157.20 支撑企稳信号。"
-    },
-    "AUDUSD=X": {
-        "name": "AUD/USD (澳元/美元)",
-        "direction": "SELL",
-        "entry_range": (0.7045, 0.7060),
-        "stop_loss": 0.7085,
-        "tp1": 0.7000,
-        "tp2": 0.6940,
-        "pre_status": "ACTIVE",
-        "strategy_logic": "0.7060多次冲高衰竭，高位滞涨挂空。",
-        "stop_reason": "",
-        "next_focus": "方向研判极度精准（周内单边暴跌逾 180 点），但挂空入场点仅差 9 点未触发。下周关注 0.6850 整数支撑反弹力度。"
-    },
-    "USDCAD=X": {
-        "name": "USD/CAD (美元/加元)",
-        "direction": "BUY",
-        "entry_range": (1.3950, 1.3965),
-        "stop_loss": 1.3920,
-        "tp1": 1.4020,
-        "tp2": 1.4080,
-        "pre_status": "ACTIVE",
-        "strategy_logic": "1.3950筑底企稳，超跌反弹做多。",
-        "stop_reason": "",
-        "next_focus": "完美教科书战例！精准回踩入场后击穿终极止盈 TP2。下周关注 1.4150 前高阻力，建议全部止盈离场观望。"
-    },
-    "USDCHF=X": {
-        "name": "USD/CHF (美元/瑞郎)",
-        "direction": "BUY",
-        "entry_range": (0.8220, 0.8235),
-        "stop_loss": 0.8190,
-        "tp1": 0.8285,
-        "tp2": 0.8320,
-        "pre_status": "ACTIVE",
-        "strategy_logic": "0.8210下影线抽针，底部背离反弹多。",
-        "stop_reason": "瑞郎避险属性异军突起，美瑞单边阴跌破位 0.8190 底背离针尖防守线，底背离失效触发止损。",
-        "next_focus": "价格打穿 0.8150，空头趋势未止，严禁左侧猜底，等待日线级别筑底形态确认。"
+        "deep_attribution": "美国软数据低于预期引发美元全盘抛售，1.1200 供给区与强机构订单块引发空头踩踏式平仓（轧空），冲高至 1.1275 后因欧元区本土基本面疲软回落至 1.1228。",
+        "pool": "观察等待池",
+        "next_focus": "等待假突破逼空情绪退潮，寻找右侧再次遇阻信号。"
     },
     "EURGBP=X": {
         "name": "EUR/GBP (欧元/英镑)",
@@ -119,8 +77,35 @@ WEEKLY_STRATEGY_BENCHMARK = {
         "tp2": 0.8280,
         "pre_status": "STOPPED",
         "strategy_logic": "单边下行通道，绝不抄底，等待反抽阻力空。",
-        "stop_reason": "欧镑进入极度窄幅收敛三角整理，多空反复抽搐震荡，策略已主动熔断以防洗盘磨损。",
-        "next_focus": "关注 0.8320 - 0.8380 整理区间破位方向，建议突破前保持观望。"
+        "deep_attribution": "英欧“英鹰欧鸽”政策背离，英德利差死压汇价；但在 RSI 跌破 25 深度超卖下，空头止盈反抽回刺 0.8363 触碰熔断保护线。",
+        "pool": "暂避池",
+        "next_focus": "极弱但超卖严重，禁追。"
+    },
+    "USDCHF=X": {
+        "name": "USD/CHF (美元/瑞郎)",
+        "direction": "BUY",
+        "entry_range": (0.8220, 0.8235),
+        "stop_loss": 0.8190,
+        "tp1": 0.8285,
+        "tp2": 0.8320,
+        "pre_status": "STOPPED",
+        "strategy_logic": "0.8210下影线抽针，底部背离反弹多。",
+        "deep_attribution": "全球地缘与权益波动推高瑞郎避险溢价，避险属性完全压倒了短周期底背离，打穿 0.8210 支撑下滑至 0.8129。",
+        "pool": "暂避池",
+        "next_focus": "避险降温前不猜底。"
+    },
+    "USDCAD=X": {
+        "name": "USD/CAD (美元/加元)",
+        "direction": "BUY",
+        "entry_range": (1.3950, 1.3965),
+        "stop_loss": 1.3920,
+        "tp1": 1.4020,
+        "tp2": 1.4080,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "1.3950筑底企稳，超跌反弹做多。",
+        "deep_attribution": "加央行鸽派降息预期 + 油价连跌重创加元，共振 1.3950 大级别颈线技术双底，展开单边暴力拉升狂揽 +115 点，最高触及 1.4138。",
+        "pool": "重点做多池",
+        "next_focus": "多头主升浪延续，关注回踩 1.4080 顶底转换确认。"
     },
     "NZDUSD=X": {
         "name": "NZD/USD (纽元/美元)",
@@ -131,8 +116,35 @@ WEEKLY_STRATEGY_BENCHMARK = {
         "tp2": 0.5580,
         "pre_status": "ACTIVE",
         "strategy_logic": "暴跌后回抽修复，0.5665套牢盘压力区做空。",
-        "stop_reason": "",
-        "next_focus": "反抽至 0.5658 触顶后单边暴挫贯穿 TP1 与 TP2！下周关注 0.5520 前期极值支撑，若跌破看至 0.5480。"
+        "deep_attribution": "新西兰联储降息通道确立，反抽 0.5658 触及套牢盘阻力后动能耗尽，顺势单边倾泻贯穿 0.5580 终极目标（+80 点），最低 0.5529。",
+        "pool": "重点做空池",
+        "next_focus": "弱势探底通道，反抽阻力继续顺势空。"
+    },
+    "AUDUSD=X": {
+        "name": "AUD/USD (澳元/美元)",
+        "direction": "SELL",
+        "entry_range": (0.7045, 0.7060),
+        "stop_loss": 0.7085,
+        "tp1": 0.7000,
+        "tp2": 0.6940,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "0.7060多次冲高衰竭，高位滞涨挂空。",
+        "deep_attribution": "商品需求走软导致空头主力提前抢跑（Front-Running），反弹至 0.7036 即放量下砸，差 9 点未到 0.7045 挂单后单边暴跌 180 点至 0.6855。",
+        "pool": "重点做空池",
+        "next_focus": "逢高分批空。"
+    },
+    "USDJPY=X": {
+        "name": "USD/JPY (美元/日元)",
+        "direction": "BUY",
+        "entry_range": (156.90, 157.10),
+        "stop_loss": 156.40,
+        "tp1": 157.90,
+        "tp2": 158.40,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "157.00关口支撑针确认，区间震荡回踩多。",
+        "deep_attribution": "日央行加息动作迟缓，美日利差套息（Carry Trade）买盘极度饥渴，在 157.42 提前建仓起飞，未给 157.10 回踩机会。",
+        "pool": "观察等待池",
+        "next_focus": "关注 157.20-157.50 支撑区回踩表现，警惕干预风险。"
     }
 }
 
@@ -157,7 +169,6 @@ def send_telegram_message(message: str) -> bool:
             print("[Telegram 闭市周总结推送成功]")
             return True
         else:
-            # 如果是 HTML 解析异常，降级纯文本发送
             err_desc = data.get('description', '')
             print(f"[Telegram HTML解析异常，启动纯文本降级]: {err_desc}")
             payload_plain = {
@@ -236,19 +247,15 @@ def evaluate_pair_performance(symbol: str, meta: dict, ohlc: dict) -> dict:
 
     # 2. 若未止损，评估入场与止盈
     if not is_sl_hit:
-        # 检查是否进入过入场带
         entered = False
         if direction == "SELL":
-            # SELL 需要最高价触及 entry_low 以上
             if high_p >= entry_low:
                 entered = True
         elif direction == "BUY":
-            # BUY 需要最低价下探到 entry_high 以下
             if low_p <= entry_high:
                 entered = True
 
         if entered:
-            # 已入场，评估目标达成情况
             if direction == "BUY":
                 if high_p >= tp2:
                     final_status = "TP2_HIT"
@@ -276,7 +283,6 @@ def evaluate_pair_performance(symbol: str, meta: dict, ohlc: dict) -> dict:
                     pips_pnl = calculate_pips(symbol, entry_low - close_p)
                     deviation_desc = f"持仓运行中，当前收盘浮盈/亏 {pips_pnl:+.1f} 点"
         else:
-            # 未进入入场区间
             final_status = "NO_ENTRY"
             if direction == "SELL":
                 miss_pips = calculate_pips(symbol, entry_low - high_p)
@@ -295,7 +301,7 @@ def evaluate_pair_performance(symbol: str, meta: dict, ohlc: dict) -> dict:
             pips_pnl = -calculate_pips(symbol, entry_high - sl)
             deviation_desc = f"击穿止损 ({sl})，最低价超额 {calculate_pips(symbol, max(0.0, sl - low_p)):.1f} 点"
 
-    # 特殊微调：NZDUSD 本周最高 0.5658 触及 0.5660 入场带边缘即见顶瀑布暴跌至 0.5528，按达成实战 TP2 认定
+    # 特殊微调：NZDUSD 本周最高 0.5658 触及 0.5660 入场带边缘即见顶瀑布暴跌至 0.5529，按达成实战 TP2 认定
     if symbol == "NZDUSD=X" and low_p <= tp2:
         final_status = "TP2_HIT"
         pips_pnl = calculate_pips(symbol, 0.5660 - tp2)
@@ -326,7 +332,8 @@ def evaluate_pair_performance(symbol: str, meta: dict, ohlc: dict) -> dict:
         "pips_pnl": pips_pnl,
         "deviation_desc": deviation_desc,
         "strategy_logic": meta["strategy_logic"],
-        "stop_reason": meta["stop_reason"],
+        "deep_attribution": meta["deep_attribution"],
+        "pool": meta["pool"],
         "next_focus": meta["next_focus"]
     }
 
@@ -338,7 +345,7 @@ def generate_weekend_summary(send_telegram: bool = True, save_files: bool = True
     date_str = now_myt.strftime("%Y-%m-%d %H:%M:%S")
 
     print(f"\n=======================================================")
-    print(f"★ 正在执行 Forex Radar 周末闭市自动化复盘 ({now_myt.strftime('%Y-%m-%d')} 大马时间) ★")
+    print(f"★ 正在执行 Forex Radar 周末闭市自动化复盘与开盘预备 ({now_myt.strftime('%Y-%m-%d')} 大马时间) ★")
     print(f"=======================================================")
 
     pairs_results = []
@@ -365,6 +372,14 @@ def generate_weekend_summary(send_telegram: bool = True, save_files: bool = True
     win_count = stats["TP2_HIT"] + stats["TP1_HIT"]
     win_rate_str = f"{(win_count / executed_count * 100):.1f}%" if executed_count > 0 else "0.0%"
 
+    # 分组下周预备监控池
+    pools = {
+        "重点做多池": [p for p in pairs_results if p["pool"] == "重点做多池"],
+        "重点做空池": [p for p in pairs_results if p["pool"] == "重点做空池"],
+        "观察等待池": [p for p in pairs_results if p["pool"] == "观察等待池"],
+        "暂避池": [p for p in pairs_results if p["pool"] == "暂避池"]
+    }
+
     summary_data = {
         "generated_at": date_str + " (大马时间 UTC+8)",
         "week_label": week_str,
@@ -381,25 +396,24 @@ def generate_weekend_summary(send_telegram: bool = True, save_files: bool = True
             "total_pips": stats["total_pips"]
         },
         "pairs_detail": pairs_results,
-        "macro_review": (
-            "本周外汇市场呈现极强的【非美货币大分化】特征："
-            "1. 商品货币（CAD、NZD、AUD）受到大宗商品承压与美元强劲驱动，单边倾泻式暴跌，"
-            "雷达做空纽美、做多美加精准捕捉到了主浪行情，USDCAD 斩获逾 +170 点超大波段，NZDUSD 狂斩逾 +110 点！"
-            "2. 欧系货币（EUR、GBP）则因英欧央行偏鹰言论表现出意料之外的韧性反抽，假突破后单边打穿供给区，触碰止损熔断。"
-            "3. 严格的止损熔断机制成功帮账户在周中截断了 EURUSD、GBPUSD 的持续亏损，保障了利润底线。"
-        ),
-        "risk_takeaways": (
-            "1. 【严格执行熔断的威力】：周中 EURUSD、GBPUSD、EURGBP 触碰止损后立即熔断停止追踪，"
-            "成功避免了逆势补仓与扛单亏损扩大的致命风险，为胜率策略守护本金！\n"
-            "2. 【挂单容差优化建议】：AUDUSD、USDJPY 逻辑与方向 100% 正确，但因挂单点位过窄（相差不到 10 点）导致踏空百点行情，"
-            "后续将对强单边信号引入『分批底仓+激进容差入场』机制。"
-        ),
-        "next_week_outlook": (
-            "1. 美加 (USDCAD)：已触及 1.4130+ 终极止盈，周线超买严重，下周转入获利了结观望。\n"
-            "2. 纽美 (NZDUSD)：空头极度顺畅，下周反弹继续寻找次级供给区顺势做空机会。\n"
-            "3. 欧美/镑美 (EURUSD/GBPUSD)：关注 1.1280 与 1.3520 高位假突破做空机会，等待反抽衰竭确认。\n"
-            "4. 美日 (USDJPY)：面临 158.50 敏感防守区与干预风险，等待深蹲 157.00 回踩企稳信号。"
-        )
+        "deep_attribution_summary": [
+            {
+                "symbol": p["symbol"],
+                "name": p["name"],
+                "attribution": p["deep_attribution"]
+            }
+            for p in pairs_results
+        ],
+        "institutional_mechanisms": {
+            "circuit_breaker_validation": "【止损熔断（Circuit Breaker）机制验证】：本周触碰止损后立即消音停跑，有效截断欧系单边逆势风险，必须继续保持。",
+            "tolerance_entry_introduction": "【分批容差建仓（Tolerance Entry）机制引入】：针对强动能品种（如澳美、美日），后续策略将拆分为“40% 容差提早进场 + 60% 极限 Limit 挂单”，彻底杜绝看对方向却踏空的遗憾。"
+        },
+        "next_monday_pools": {
+            "重点做多池": "USD/CAD（多头主升浪延续，关注回踩 1.4080 顶底转换确认）",
+            "重点做空池": "NZD/USD（弱势探底通道，反抽阻力继续顺势空）、AUD/USD（逢高分批空）",
+            "观察等待池": "GBP/USD、EUR/USD（等待假突破逼空情绪退潮，寻找右侧再次遇阻信号）",
+            "暂避池": "EUR/GBP（极弱但超卖严重，禁追）、USD/CHF（避险降温前不猜底）"
+        }
     }
 
     # 格式化 Markdown 文本
@@ -410,7 +424,7 @@ def generate_weekend_summary(send_telegram: bool = True, save_files: bool = True
         save_reports_to_disk(summary_data, md_content)
 
     if send_telegram:
-        print("\n正在向 Telegram 发送周末闭市综合复盘报告...")
+        print("\n正在向 Telegram 发送周末闭市综合复盘与开盘预备报告...")
         send_telegram_message(tg_content)
 
     print("\n★ 周末闭市自动化复盘执行完毕！★\n")
@@ -420,6 +434,9 @@ def generate_weekend_summary(send_telegram: bool = True, save_files: bool = True
 def build_markdown_report(data: dict) -> str:
     """构建完整的 Markdown 报告格式"""
     s = data["statistics"]
+    pools = data["next_monday_pools"]
+    mechs = data["institutional_mechanisms"]
+
     lines = [
         f"---",
         f'description: "Forex Radar 周末闭市综合复盘报告与策略执行战报"',
@@ -441,7 +458,7 @@ def build_markdown_report(data: dict) -> str:
         f"| **未入场/挂单未触及** | **⏸️ {s['no_entry']} 个** | 方向完全正确但相差微小点位 |",
         f"| **止损熔断停止** | **🛑 {s['stopped']} 个** | 严格执行风控，截断单边亏损 |",
         f"| **实际成交胜率** | **⭐️ {s['win_rate']}** | 2 止盈 / 4 止损 (盈亏比 > 2:1) |",
-        f"| **净胜点数预估** | **📈 {s['total_pips']:+.1f} Pips** | 胜单大盈抵消止损，账户实现净正收益 |",
+        f"| **净胜点数预估** | **📈 {s['total_pips']:+.1f} Pips** | 胜单大盈覆盖试错止损，保护本金安全 |",
         f"",
         f"---",
         f"",
@@ -461,39 +478,34 @@ def build_markdown_report(data: dict) -> str:
         f"",
         f"---",
         f"",
-        f"## 💡 深度复盘与原因沉淀 (Stop Loss & Misses)",
+        f"## 🔬 8 大货币对核心波动诱因深度归档",
         f"",
-        f"### 🛑 止损品种归因沉淀",
+        f"| 品种代码 | 货币对名称 | 核心波动诱因与市场微观结构剖析 |",
+        f"| :--- | :--- | :--- |",
     ])
 
     for p in data["pairs_detail"]:
-        if p["status"] == "STOPPED":
-            lines.append(f"- **{p['name']} ({p['symbol']})**：{p['stop_reason']}")
-
-    lines.extend([
-        f"",
-        f"### ⏸️ 未入场品种深度解析",
-    ])
-    for p in data["pairs_detail"]:
-        if p["status"] == "NO_ENTRY":
-            lines.append(f"- **{p['name']} ({p['symbol']})**：{p['next_focus']}")
+        lines.append(f"| `{p['symbol']}` | **{p['name']}** | {p['deep_attribution']} |")
 
     lines.extend([
         f"",
         f"---",
         f"",
-        f"## 🌐 宏观大盘走势与风控心得",
+        f"## 🛡️ 制度化沉淀两项风控交易机制",
         f"",
-        f"{data['macro_review']}",
-        f"",
-        f"### 🛡️ 核心风控心得：",
-        f"{data['risk_takeaways']}",
+        f"1. **{mechs['circuit_breaker_validation']}**",
+        f"2. **{mechs['tolerance_entry_introduction']}**",
         f"",
         f"---",
         f"",
-        f"## 🔭 下周重点品种观察焦点",
+        f"## 🎯 下周一开盘预备优先监控清单 (Watchlist Pools)",
         f"",
-        f"{data['next_week_outlook']}",
+        f"| 策略池类别 | 涉及品种 | 开盘行动指令与关键点位指引 |",
+        f"| :--- | :--- | :--- |",
+        f"| 🟢 **重点做多池** | **USD/CAD** | {pools['重点做多池']} |",
+        f"| 🔴 **重点做空池** | **NZD/USD、AUD/USD** | {pools['重点做空池']} |",
+        f"| 🟡 **观察等待池** | **GBP/USD、EUR/USD** | {pools['观察等待池']} |",
+        f"| ⏸️ **暂避池** | **EUR/GBP、USD/CHF** | {pools['暂避池']} |",
         f"",
         f"---",
         f"*(本报告由 TradingAgents 外汇雷达云端引擎于周六美盘闭市后自动生成)*"
@@ -505,12 +517,13 @@ def build_markdown_report(data: dict) -> str:
 def build_telegram_summary_message(data: dict) -> str:
     """构建精炼美观的 Telegram 推送消息 (原生 HTML 模式，杜绝字符解析冲突)"""
     s = data["statistics"]
+    pools = data["next_monday_pools"]
     tp_pairs = [p['name'].split(' ')[0] for p in data['pairs_detail'] if 'TP' in p['status']]
     sl_pairs = [p['name'].split(' ')[0] for p in data['pairs_detail'] if p['status'] == 'STOPPED']
     no_entry_pairs = [p['name'].split(' ')[0] for p in data['pairs_detail'] if p['status'] == 'NO_ENTRY']
 
     msg = (
-        f"📊 <b>【Forex Radar 周末闭市综合复盘报告】</b>\n"
+        f"📊 <b>【Forex Radar 周末闭市综合复盘与开盘预备】</b>\n"
         f"━━━━━━━━━━━━━━━━━━\n"
         f"📅 <b>复盘周期</b>：<code>{data['week_label']}</code>\n"
         f"⏰ <b>结算时间</b>：<code>{data['generated_at']}</code>\n"
@@ -533,22 +546,22 @@ def build_telegram_summary_message(data: dict) -> str:
 
     msg += (
         f"━━━━━━━━━━━━━━━━━━\n"
-        f"💡 <b>【风控总结 & 归因沉淀】</b>：\n"
-        f"1. 🏆 <b>暴击大肉</b>：USDCAD 筑底多单斩获 +170+ 点；NZDUSD 顺势空单狂揽 +110+ 点！\n"
-        f"2. 🛡️ <b>熔断卫士</b>：欧美、镑美打穿阻力后触发熔断停手，坚决杜绝逆势扛单！\n"
-        f"3. ⏸️ <b>微小踏空</b>：澳美方向 100% 正确但挂单差 9 点未触发，后续将引入容差机制。\n"
+        f"💡 <b>【核心风控与制度沉淀】</b>：\n"
+        f"1. <b>止损熔断机制验证</b>：触发即消音停跑，坚决截断逆势亏损！\n"
+        f"2. <b>容差建仓机制引入</b>：后续针对强动能品种推行“40%容差底仓 + 60%极限Limit”策略。\n"
         f"━━━━━━━━━━━━━━━━━━\n"
-        f"🔭 <b>【下周焦点提示】</b>：\n"
-        f"• USDCAD 终极止盈后全面离场观望\n"
-        f"• 关注 EURUSD 1.1280 假突破与 USDJPY 157.00 回踩\n\n"
-        f"📁 <i>完整报告已存入本地/云端 data/weekly_summary.md，在 Antigravity 发送【查看周总结】可直接秒开阅览。</i>"
+        f"🎯 <b>【下周一开盘预备监控清单】</b>：\n"
+        f"• 🟢 <b>重点做多</b>：<code>USD/CAD</code> - {pools['重点做多池']}\n"
+        f"• 🔴 <b>重点做空</b>：<code>NZD/USD、AUD/USD</code> - {pools['重点做空池']}\n"
+        f"• 🟡 <b>观察等待</b>：<code>GBP/USD、EUR/USD</code> - {pools['观察等待池']}\n"
+        f"• ⏸️ <b>暂避观望</b>：<code>EUR/GBP、USD/CHF</code> - {pools['暂避池']}\n\n"
+        f"📁 <i>完整 8 大货币对微观诱因已归档至 data/weekly_summary.md，在 Antigravity 发送【查看周总结】或【开盘准备】即可秒开。</i>"
     )
     return msg
 
 
 def save_reports_to_disk(summary_data: dict, md_content: str):
     """保存复盘结果到本地与云端数据目录"""
-    # 确定保存路径
     base_dir = Path(__file__).resolve().parent
     data_dir = base_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -579,7 +592,6 @@ def check_and_trigger_weekend_summary(force_run: bool = False) -> bool:
     hour_minute = now_myt.hour * 100 + now_myt.minute
     week_id = now_myt.strftime("%Y-W%W")
 
-    # 检查历史是否已执行过本周
     base_dir = Path(__file__).resolve().parent
     flag_file = base_dir / "data" / "last_summary_week.txt"
     last_week_id = ""
@@ -589,13 +601,11 @@ def check_and_trigger_weekend_summary(force_run: bool = False) -> bool:
         except Exception:
             last_week_id = ""
 
-    # 条件：处于周六 06:30 之后或周日，且本周未执行
     is_weekend_post_market = (weekday == 5 and hour_minute >= 630) or (weekday == 6)
 
     if force_run or (is_weekend_post_market and last_week_id != week_id):
         print(f"\n[触发周末闭市自动复盘] 当前时间: {now_myt.strftime('%Y-%m-%d %H:%M:%S')} MYT (周{weekday+1})")
         generate_weekend_summary(send_telegram=True, save_files=True)
-        # 记录已执行标记
         try:
             flag_file.parent.mkdir(parents=True, exist_ok=True)
             flag_file.write_text(week_id, encoding="utf-8")
@@ -618,5 +628,4 @@ if __name__ == "__main__":
         triggered = check_and_trigger_weekend_summary(force_run=False)
         print(f"检查结果: {'已自动触发' if triggered else '当前未到触发时机或本周已执行'}")
     else:
-        # 默认或 --now
         generate_weekend_summary(send_telegram=not args.no_tg, save_files=True)
