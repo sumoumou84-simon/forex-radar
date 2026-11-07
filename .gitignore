@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+.env
+data/last_summary_week.txt

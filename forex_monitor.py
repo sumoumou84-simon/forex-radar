@@ -17,6 +17,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import requests
 import yfinance as yf
+from weekend_summary import check_and_trigger_weekend_summary, generate_weekend_summary
 
 # 确保在 Windows 控制台下支持 UTF-8 与 Emoji 正常打印
 if hasattr(sys.stdout, 'reconfigure'):
@@ -518,6 +519,13 @@ def run_monitor(poll_interval: int = 30):
 
     while True:
         now_time = time.time()
+
+        # 周末闭市自动化复盘检测 (大马时间周六 06:30 美盘收盘结算后自动触发并推送)
+        try:
+            check_and_trigger_weekend_summary()
+        except Exception as e:
+            print(f"[周末闭市复盘检测跳过]: {e}")
+
         for symbol, info in list(MONITOR_RULES.items()):
             # 1. 状态机熔断检查：若已熔断停止，直接跳过，不再拉取价格、不再比对、不发通知
             if info.get("status") == "STOPPED":
@@ -584,9 +592,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="TradingAgents Forex Telegram Monitor")
     parser.add_argument("--test", action="store_true", help="发送一条测试通知到 Telegram")
     parser.add_argument("--interval", type=int, default=30, help="行情轮询间隔秒数 (默认 30)")
+    parser.add_argument("--weekly-summary", action="store_true", help="立即生成并推送周末闭市复盘报告")
     args = parser.parse_args()
 
-    if args.test:
+    if args.weekly_summary:
+        print("正在手动执行周末闭市复盘...")
+        generate_weekend_summary(send_telegram=True, save_files=True)
+    elif args.test:
         test_msg = (
             "🔔 *【TradingAgents 外汇版 - Telegram 推送测试】*\n"
             "━━━━━━━━━━━━━━━━━━\n"
