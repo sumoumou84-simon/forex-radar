@@ -40,111 +40,111 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "409951109").strip()
 
 MYT_TIMEZONE = timezone(timedelta(hours=8))
 
-# 8 大货币对策略参数、深度归因与下周指引
+# 8 大货币对策略参数、深度归因与下周指引 (2026年第45周最新推演)
 WEEKLY_STRATEGY_BENCHMARK = {
-    "GBPUSD=X": {
-        "name": "GBP/USD (英镑/美元)",
-        "direction": "SELL",
-        "entry_range": (1.3415, 1.3430),
-        "stop_loss": 1.3475,
-        "tp1": 1.3350,
-        "tp2": 1.3300,
-        "pre_status": "STOPPED",
-        "strategy_logic": "1.3438流动性掠夺假突破，反抽供给区高空。",
-        "deep_attribution": "英国通胀粘性推迟 BoE 降息定价，叠加美元短期承压；主力在 1.3430 关键阻力发动 Liquidity Sweep（扫荡散户空头止损），脉冲触碰 1.3502 后回落至 1.3456。",
-        "pool": "观察等待池",
-        "next_focus": "等待假突破逼空情绪退潮，寻找右侧再次遇阻信号。"
-    },
-    "EURUSD=X": {
-        "name": "EUR/USD (欧元/美元)",
-        "direction": "SELL",
-        "entry_range": (1.1195, 1.1210),
-        "stop_loss": 1.1245,
-        "tp1": 1.1140,
-        "tp2": 1.1090,
-        "pre_status": "STOPPED",
-        "strategy_logic": "1.1200蓝色供给压制带受阻，阻力区挂空。",
-        "deep_attribution": "美国软数据低于预期引发美元全盘抛售，1.1200 供给区与强机构订单块引发空头踩踏式平仓（轧空），冲高至 1.1275 后因欧元区本土基本面疲软回落至 1.1228。",
-        "pool": "观察等待池",
-        "next_focus": "等待假突破逼空情绪退潮，寻找右侧再次遇阻信号。"
-    },
-    "EURGBP=X": {
-        "name": "EUR/GBP (欧元/英镑)",
-        "direction": "SELL",
-        "entry_range": (0.8360, 0.8375),
-        "stop_loss": 0.8405,
-        "tp1": 0.8320,
-        "tp2": 0.8280,
-        "pre_status": "STOPPED",
-        "strategy_logic": "单边下行通道，绝不抄底，等待反抽阻力空。",
-        "deep_attribution": "英欧“英鹰欧鸽”政策背离，英德利差死压汇价；但在 RSI 跌破 25 深度超卖下，空头止盈反抽回刺 0.8363 触碰熔断保护线。",
-        "pool": "暂避池",
-        "next_focus": "极弱但超卖严重，禁追。"
-    },
-    "USDCHF=X": {
-        "name": "USD/CHF (美元/瑞郎)",
-        "direction": "BUY",
-        "entry_range": (0.8220, 0.8235),
-        "stop_loss": 0.8190,
-        "tp1": 0.8285,
-        "tp2": 0.8320,
-        "pre_status": "STOPPED",
-        "strategy_logic": "0.8210下影线抽针，底部背离反弹多。",
-        "deep_attribution": "全球地缘与权益波动推高瑞郎避险溢价，避险属性完全压倒了短周期底背离，打穿 0.8210 支撑下滑至 0.8129。",
-        "pool": "暂避池",
-        "next_focus": "避险降温前不猜底。"
-    },
     "USDCAD=X": {
         "name": "USD/CAD (美元/加元)",
         "direction": "BUY",
-        "entry_range": (1.3950, 1.3965),
-        "stop_loss": 1.3920,
-        "tp1": 1.4020,
-        "tp2": 1.4080,
+        "entry_range": (1.4065, 1.4095),
+        "stop_loss": 1.4020,
+        "tp1": 1.4160,
+        "tp2": 1.4230,
         "pre_status": "ACTIVE",
-        "strategy_logic": "1.3950筑底企稳，超跌反弹做多。",
-        "deep_attribution": "加央行鸽派降息预期 + 油价连跌重创加元，共振 1.3950 大级别颈线技术双底，展开单边暴力拉升狂揽 +115 点，最高触及 1.4138。",
+        "strategy_logic": "多头主升浪，回踩顶底转换接多",
+        "deep_attribution": "加央行鸽派降息预期 + 油价连跌重创加元，共振大级别双底，展开单边暴力拉升。",
         "pool": "重点做多池",
-        "next_focus": "多头主升浪延续，关注回踩 1.4080 顶底转换确认。"
+        "next_focus": "多头主升浪延续，关注回踩 1.4065-1.4095 顶底转换确认接多。"
     },
     "NZDUSD=X": {
         "name": "NZD/USD (纽元/美元)",
         "direction": "SELL",
-        "entry_range": (0.5660, 0.5675),
-        "stop_loss": 0.5710,
-        "tp1": 0.5615,
-        "tp2": 0.5580,
+        "entry_range": (0.5575, 0.5605),
+        "stop_loss": 0.5645,
+        "tp1": 0.5510,
+        "tp2": 0.5450,
         "pre_status": "ACTIVE",
-        "strategy_logic": "暴跌后回抽修复，0.5665套牢盘压力区做空。",
-        "deep_attribution": "新西兰联储降息通道确立，反抽 0.5658 触及套牢盘阻力后动能耗尽，顺势单边倾泻贯穿 0.5580 终极目标（+80 点），最低 0.5529。",
+        "strategy_logic": "跌破0.5580颈线，反抽阻力顺势空",
+        "deep_attribution": "新西兰联储降息通道确立，反抽遇阻后顺势单边倾泻，跌破 0.5580 颈线。",
         "pool": "重点做空池",
-        "next_focus": "弱势探底通道，反抽阻力继续顺势空。"
+        "next_focus": "弱势探底通道，反抽 0.5575-0.5605 阻力继续顺势空。"
     },
     "AUDUSD=X": {
         "name": "AUD/USD (澳元/美元)",
         "direction": "SELL",
-        "entry_range": (0.7045, 0.7060),
-        "stop_loss": 0.7085,
-        "tp1": 0.7000,
-        "tp2": 0.6940,
+        "entry_range": (0.6920, 0.6950),
+        "stop_loss": 0.6990,
+        "tp1": 0.6840,
+        "tp2": 0.6780,
         "pre_status": "ACTIVE",
-        "strategy_logic": "0.7060多次冲高衰竭，高位滞涨挂空。",
-        "deep_attribution": "商品需求走软导致空头主力提前抢跑（Front-Running），反弹至 0.7036 即放量下砸，差 9 点未到 0.7045 挂单后单边暴跌 180 点至 0.6855。",
+        "strategy_logic": "引入容差挂单，逢高分批做空",
+        "deep_attribution": "商品需求走软导致空头主力强势控盘，本周引入容差挂单机制。",
         "pool": "重点做空池",
-        "next_focus": "逢高分批空。"
+        "next_focus": "逢高分批做空，关注 0.6920-0.6950 供给带。"
     },
     "USDJPY=X": {
         "name": "USD/JPY (美元/日元)",
         "direction": "BUY",
-        "entry_range": (156.90, 157.10),
-        "stop_loss": 156.40,
-        "tp1": 157.90,
-        "tp2": 158.40,
+        "entry_range": (157.80, 158.10),
+        "stop_loss": 157.30,
+        "tp1": 158.90,
+        "tp2": 159.60,
         "pre_status": "ACTIVE",
-        "strategy_logic": "157.00关口支撑针确认，区间震荡回踩多。",
-        "deep_attribution": "日央行加息动作迟缓，美日利差套息（Carry Trade）买盘极度饥渴，在 157.42 提前建仓起飞，未给 157.10 回踩机会。",
+        "strategy_logic": "利差套息多单，回踩支撑接多",
+        "deep_attribution": "日央行加息动作迟缓，美日利差套息买盘饥渴，回踩支撑接多。",
         "pool": "观察等待池",
-        "next_focus": "关注 157.20-157.50 支撑区回踩表现，警惕干预风险。"
+        "next_focus": "关注 157.80-158.10 支撑区回踩表现，警惕干预风险。"
+    },
+    "GBPUSD=X": {
+        "name": "GBP/USD (英镑/美元)",
+        "direction": "SELL",
+        "entry_range": (1.3410, 1.3435),
+        "stop_loss": 1.3480,
+        "tp1": 1.3320,
+        "tp2": 1.3250,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "假突破扫损后暴跌，顺势反弹空",
+        "deep_attribution": "主力扫损后暴跌，假突破逼空情绪退潮，顺势反弹空。",
+        "pool": "观察等待池",
+        "next_focus": "反抽 1.3410-1.3435 供给区受阻做空。"
+    },
+    "EURUSD=X": {
+        "name": "EUR/USD (欧元/美元)",
+        "direction": "SELL",
+        "entry_range": (1.1185, 1.1215),
+        "stop_loss": 1.1255,
+        "tp1": 1.1100,
+        "tp2": 1.1030,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "供给区承压破位，反抽1.1200空",
+        "deep_attribution": "供给区承压破位，反抽1.1200关键颈线空。",
+        "pool": "观察等待池",
+        "next_focus": "反抽 1.1185-1.1215 逢高挂空。"
+    },
+    "USDCHF=X": {
+        "name": "USD/CHF (美元/瑞郎)",
+        "direction": "BUY",
+        "entry_range": (0.8160, 0.8185),
+        "stop_loss": 0.8120,
+        "tp1": 0.8240,
+        "tp2": 0.8300,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "地缘避险压制，低位轻仓试多",
+        "deep_attribution": "地缘避险压制下探，低位轻仓试多，严格防守 0.8120。",
+        "pool": "暂避池",
+        "next_focus": "避险降温前严格轻仓低吸试多。"
+    },
+    "EURGBP=X": {
+        "name": "EUR/GBP (欧元/英镑)",
+        "direction": "SELL",
+        "entry_range": (0.8365, 0.8385),
+        "stop_loss": 0.8415,
+        "tp1": 0.8315,
+        "tp2": 0.8280,
+        "pre_status": "ACTIVE",
+        "strategy_logic": "深度超卖通道，阻力短空",
+        "deep_attribution": "深度超卖通道，阻力位 0.8365-0.8385 寻求短空波段。",
+        "pool": "暂避池",
+        "next_focus": "超卖严重，只在阻力位短空，严禁追空。"
     }
 }
 

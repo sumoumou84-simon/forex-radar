@@ -74,162 +74,6 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "409951109").strip()
 #   "BUY_ZONE":  价格回落进入该区间，触发逢低做多提醒
 #   "TAKE_PROFIT": 价格到达前期目标，触发止盈提醒
 MONITOR_RULES = {
-    "GBPUSD=X": {
-        "name": "GBP/USD (英镑/美元)",
-        "status": "STOPPED",  # 触及止损熔断，已停止监控
-        "rules": [
-            {
-                "id": "GBPUSD_SELL",
-                "type": "SELL_ZONE",
-                "condition": lambda p: p >= 1.3415,
-                "label": "到达反抽供给区高空入场带",
-                "action": "SELL (反抽承压做空)",
-                "entry": "1.3415 - 1.3430",
-                "stop_loss": "1.3475",
-                "target": "1.3350 (TP1) / 1.3300 (TP2)",
-                "logic": "1.3438流动性掠夺假突破，反抽供给区高空。"
-            },
-            {
-                "id": "GBPUSD_TP1",
-                "type": "TAKE_PROFIT",
-                "condition": lambda p: p <= 1.3350,
-                "label": "触及第一目标止盈区 (TP1)",
-                "action": "TAKE PROFIT (分批止盈/推保本损)",
-                "entry": "-",
-                "stop_loss": "保本推损",
-                "target": "1.3300 (终极目标 TP2)",
-                "logic": "空头到达第一支撑带，建议减仓锁定利润，剩余仓位推保本损看至 1.3300。"
-            },
-            {
-                "id": "GBPUSD_SL",
-                "type": "STOP_LOSS",
-                "condition": lambda p: p >= 1.3475,
-                "label": "触及严格防守止损位",
-                "action": "STOP LOSS (止损离场/严禁加仓)",
-                "entry": "-",
-                "stop_loss": "1.3475",
-                "target": "-",
-                "logic": "突破 1.3475 前高防守位，假突破逻辑被推翻，坚决止损离场，停手冷静！"
-            }
-        ]
-    },
-    "EURUSD=X": {
-        "name": "EUR/USD (欧元/美元)",
-        "status": "STOPPED",  # 触及止损熔断，已停止监控
-        "rules": [
-            {
-                "id": "EURUSD_SELL",
-                "type": "SELL_ZONE",
-                "condition": lambda p: p >= 1.1195,
-                "label": "到达阻力区挂空入场带",
-                "action": "SELL (阻力区反抽做空)",
-                "entry": "1.1195 - 1.1210",
-                "stop_loss": "1.1245",
-                "target": "1.1140 (TP1) / 1.1090 (TP2)",
-                "logic": "1.1200蓝色供给压制带受阻，阻力区挂空。"
-            },
-            {
-                "id": "EURUSD_TP1",
-                "type": "TAKE_PROFIT",
-                "condition": lambda p: p <= 1.1140,
-                "label": "触及第一目标止盈区 (TP1)",
-                "action": "TAKE PROFIT (分批止盈/推保本损)",
-                "entry": "-",
-                "stop_loss": "保本推损",
-                "target": "1.1090 (终极目标 TP2)",
-                "logic": "到达第一目标位 1.1140，建议部分止盈并移动止损保护盈利。"
-            },
-            {
-                "id": "EURUSD_SL",
-                "type": "STOP_LOSS",
-                "condition": lambda p: p >= 1.1245,
-                "label": "触及严格防守止损位",
-                "action": "STOP LOSS (止损离场/严禁加仓)",
-                "entry": "-",
-                "stop_loss": "1.1245",
-                "target": "-",
-                "logic": "打穿 1.1245 供给区上限，多头单边爆发，必须严格止损，严禁任何逆势加仓！"
-            }
-        ]
-    },
-    "USDJPY=X": {
-        "name": "USD/JPY (美元/日元)",
-        "status": "ACTIVE",
-        "rules": [
-            {
-                "id": "USDJPY_BUY",
-                "type": "BUY_ZONE",
-                "condition": lambda p: p <= 157.10,
-                "label": "到达区间震荡回踩多入场带",
-                "action": "BUY (支撑企稳低多)",
-                "entry": "156.90 - 157.10",
-                "stop_loss": "156.40",
-                "target": "157.90 (TP1) / 158.40 (TP2)",
-                "logic": "157.00关口支撑针确认，区间震荡回踩多。"
-            },
-            {
-                "id": "USDJPY_TP1",
-                "type": "TAKE_PROFIT",
-                "condition": lambda p: p >= 157.90,
-                "label": "触及第一目标止盈区 (TP1)",
-                "action": "TAKE PROFIT (分批止盈/推保本损)",
-                "entry": "-",
-                "stop_loss": "保本推损",
-                "target": "158.40 (终极目标 TP2)",
-                "logic": "反弹测试 157.90 阻力区，建议先兑现 50%+ 利润，博弈 158.40 高位目标。"
-            },
-            {
-                "id": "USDJPY_SL",
-                "type": "STOP_LOSS",
-                "condition": lambda p: p <= 156.40,
-                "label": "触及严格防守止损位",
-                "action": "STOP LOSS (止损离场/严禁加仓)",
-                "entry": "-",
-                "stop_loss": "156.40",
-                "target": "-",
-                "logic": "跌破 156.40 大级别支撑平台，多头结构破坏，坚决止损并停手观望！"
-            }
-        ]
-    },
-    "AUDUSD=X": {
-        "name": "AUD/USD (澳元/美元)",
-        "status": "ACTIVE",
-        "rules": [
-            {
-                "id": "AUDUSD_SELL",
-                "type": "SELL_ZONE",
-                "condition": lambda p: p >= 0.7045,
-                "label": "到达高位滞涨挂空入场带",
-                "action": "SELL (高位滞涨做空)",
-                "entry": "0.7045 - 0.7060",
-                "stop_loss": "0.7085",
-                "target": "0.7000 (TP1) / 0.6940 (TP2)",
-                "logic": "0.7060多次冲高衰竭，高位滞涨挂空。"
-            },
-            {
-                "id": "AUDUSD_TP1",
-                "type": "TAKE_PROFIT",
-                "condition": lambda p: p <= 0.7000,
-                "label": "触及第一目标止盈区 (TP1)",
-                "action": "TAKE PROFIT (分批止盈/推保本损)",
-                "entry": "-",
-                "stop_loss": "保本推损",
-                "target": "0.6940 (终极目标 TP2)",
-                "logic": "空单触及 0.7000 整数关口强支撑，建议分批止盈并严格保本推损。"
-            },
-            {
-                "id": "AUDUSD_SL",
-                "type": "STOP_LOSS",
-                "condition": lambda p: p >= 0.7085,
-                "label": "触及严格防守止损位",
-                "action": "STOP LOSS (止损离场/严禁加仓)",
-                "entry": "-",
-                "stop_loss": "0.7085",
-                "target": "-",
-                "logic": "突破 0.7085 前高强压，上方打开新上行空间，严禁扛单，坚决止损！"
-            }
-        ]
-    },
     "USDCAD=X": {
         "name": "USD/CAD (美元/加元)",
         "status": "ACTIVE",
@@ -237,113 +81,35 @@ MONITOR_RULES = {
             {
                 "id": "USDCAD_BUY",
                 "type": "BUY_ZONE",
-                "condition": lambda p: p <= 1.3965,
-                "label": "到达超跌反弹做多入场带",
-                "action": "BUY (筑底企稳做多)",
-                "entry": "1.3950 - 1.3965",
-                "stop_loss": "1.3920",
-                "target": "1.4020 (TP1) / 1.4080 (TP2)",
-                "logic": "1.3950筑底企稳，超跌反弹做多。"
+                "condition": lambda p: p <= 1.4095,
+                "label": "到达顶底转换回踩多入场带",
+                "action": "BUY (回踩顶底转换接多)",
+                "entry": "1.4065 - 1.4095",
+                "stop_loss": "1.4020",
+                "target": "1.4160 (TP1) / 1.4230 (TP2)",
+                "logic": "多头主升浪，回踩顶底转换接多。"
             },
             {
                 "id": "USDCAD_TP1",
                 "type": "TAKE_PROFIT",
-                "condition": lambda p: p >= 1.4020,
+                "condition": lambda p: p >= 1.4160,
                 "label": "触及第一目标止盈区 (TP1)",
                 "action": "TAKE PROFIT (分批止盈/推保本损)",
                 "entry": "-",
                 "stop_loss": "保本推损",
-                "target": "1.4080 (终极目标 TP2)",
-                "logic": "反弹触及 1.4020 前期颈线压制，注意分批落袋为安。"
+                "target": "1.4230 (终极目标 TP2)",
+                "logic": "反弹触及 1.4160 关键阻力，建议兑现部分利润并保本推损。"
             },
             {
                 "id": "USDCAD_SL",
                 "type": "STOP_LOSS",
-                "condition": lambda p: p <= 1.3920,
+                "condition": lambda p: p <= 1.4020,
                 "label": "触及严格防守止损位",
                 "action": "STOP LOSS (止损离场/严禁加仓)",
                 "entry": "-",
-                "stop_loss": "1.3920",
+                "stop_loss": "1.4020",
                 "target": "-",
-                "logic": "破位 1.3920 关键低点，筑底失败，严格止损，禁止加仓补仓！"
-            }
-        ]
-    },
-    "USDCHF=X": {
-        "name": "USD/CHF (美元/瑞郎)",
-        "status": "ACTIVE",
-        "rules": [
-            {
-                "id": "USDCHF_BUY",
-                "type": "BUY_ZONE",
-                "condition": lambda p: p <= 0.8235,
-                "label": "到达底部背离反弹多入场带",
-                "action": "BUY (底部背离反弹多)",
-                "entry": "0.8220 - 0.8235",
-                "stop_loss": "0.8190",
-                "target": "0.8285 (TP1) / 0.8320 (TP2)",
-                "logic": "0.8210下影线抽针，底部背离反弹多。"
-            },
-            {
-                "id": "USDCHF_TP1",
-                "type": "TAKE_PROFIT",
-                "condition": lambda p: p >= 0.8285,
-                "label": "触及第一目标止盈区 (TP1)",
-                "action": "TAKE PROFIT (分批止盈/推保本损)",
-                "entry": "-",
-                "stop_loss": "保本推损",
-                "target": "0.8320 (终极目标 TP2)",
-                "logic": "多单到达 0.8285 关键阻力，建议止盈半仓，剩余仓位看至 0.8320。"
-            },
-            {
-                "id": "USDCHF_SL",
-                "type": "STOP_LOSS",
-                "condition": lambda p: p <= 0.8190,
-                "label": "触及严格防守止损位",
-                "action": "STOP LOSS (止损离场/强制冷静)",
-                "entry": "-",
-                "stop_loss": "0.8190",
-                "target": "-",
-                "logic": "跌破 0.8190 针尖防守线，底背离失效，坚决止损切断风险，停手离开盘面！"
-            }
-        ]
-    },
-    "EURGBP=X": {
-        "name": "EUR/GBP (欧元/英镑)",
-        "status": "STOPPED",  # 触及止损熔断，已停止监控
-        "rules": [
-            {
-                "id": "EURGBP_SELL",
-                "type": "SELL_ZONE",
-                "condition": lambda p: p >= 0.8360,
-                "label": "到达反抽阻力挂空入场带",
-                "action": "SELL (反抽承压做空)",
-                "entry": "0.8360 - 0.8375",
-                "stop_loss": "0.8405",
-                "target": "0.8320 (TP1) / 0.8280 (TP2)",
-                "logic": "单边下行通道，绝不抄底，等待反抽阻力空。"
-            },
-            {
-                "id": "EURGBP_TP1",
-                "type": "TAKE_PROFIT",
-                "condition": lambda p: p <= 0.8320,
-                "label": "触及第一目标止盈区 (TP1)",
-                "action": "TAKE PROFIT (分批止盈/推保本损)",
-                "entry": "-",
-                "stop_loss": "保本推损",
-                "target": "0.8280 (终极目标 TP2)",
-                "logic": "空单到达 0.8320 阶段低点支撑，兑现利润，严禁追空。"
-            },
-            {
-                "id": "EURGBP_SL",
-                "type": "STOP_LOSS",
-                "condition": lambda p: p >= 0.8405,
-                "label": "触及严格防守止损位",
-                "action": "STOP LOSS (止损离场/严禁加仓)",
-                "entry": "-",
-                "stop_loss": "0.8405",
-                "target": "-",
-                "logic": "升破 0.8405 下行通道上轨，下行趋势暂停，严格止损离场！"
+                "logic": "跌破 1.4020 平台支撑，主升结构破坏，严格止损离场！"
             }
         ]
     },
@@ -354,35 +120,269 @@ MONITOR_RULES = {
             {
                 "id": "NZDUSD_SELL",
                 "type": "SELL_ZONE",
-                "condition": lambda p: p >= 0.5660,
-                "label": "到达套牢盘压力区做空入场带",
-                "action": "SELL (套牢盘压力区做空)",
-                "entry": "0.5660 - 0.5675",
-                "stop_loss": "0.5710",
-                "target": "0.5615 (TP1) / 0.5580 (TP2)",
-                "logic": "暴跌后回抽修复，0.5665套牢盘压力区做空。"
+                "condition": lambda p: p >= 0.5575,
+                "label": "到达颈线反抽阻力高空入场带",
+                "action": "SELL (反抽阻力顺势做空)",
+                "entry": "0.5575 - 0.5605",
+                "stop_loss": "0.5645",
+                "target": "0.5510 (TP1) / 0.5450 (TP2)",
+                "logic": "跌破0.5580颈线，反抽阻力顺势空。"
             },
             {
                 "id": "NZDUSD_TP1",
                 "type": "TAKE_PROFIT",
-                "condition": lambda p: p <= 0.5615,
+                "condition": lambda p: p <= 0.5510,
                 "label": "触及第一目标止盈区 (TP1)",
                 "action": "TAKE PROFIT (分批止盈/推保本损)",
                 "entry": "-",
                 "stop_loss": "保本推损",
-                "target": "0.5580 (终极目标 TP2)",
-                "logic": "空单触及 0.5615 止盈区，锁定利润，留底仓博弈 0.5580。"
+                "target": "0.5450 (终极目标 TP2)",
+                "logic": "空单触及 0.5510 目标位，锁定大部分利润，留仓博弈 0.5450。"
             },
             {
                 "id": "NZDUSD_SL",
                 "type": "STOP_LOSS",
-                "condition": lambda p: p >= 0.5710,
+                "condition": lambda p: p >= 0.5645,
                 "label": "触及严格防守止损位",
                 "action": "STOP LOSS (止损离场/严禁加仓)",
                 "entry": "-",
-                "stop_loss": "0.5710",
+                "stop_loss": "0.5645",
                 "target": "-",
-                "logic": "突破 0.5710 大阻力区，回抽演变为反转，坚决执行止损！"
+                "logic": "突破 0.5645 防守位，下行破位逻辑被破坏，严格止损离场！"
+            }
+        ]
+    },
+    "AUDUSD=X": {
+        "name": "AUD/USD (澳元/美元)",
+        "status": "ACTIVE",
+        "rules": [
+            {
+                "id": "AUDUSD_SELL",
+                "type": "SELL_ZONE",
+                "condition": lambda p: p >= 0.6920,
+                "label": "到达容差反弹做空入场带",
+                "action": "SELL (逢高分批做空)",
+                "entry": "0.6920 - 0.6950",
+                "stop_loss": "0.6990",
+                "target": "0.6840 (TP1) / 0.6780 (TP2)",
+                "logic": "引入容差挂单，逢高分批做空。"
+            },
+            {
+                "id": "AUDUSD_TP1",
+                "type": "TAKE_PROFIT",
+                "condition": lambda p: p <= 0.6840,
+                "label": "触及第一目标止盈区 (TP1)",
+                "action": "TAKE PROFIT (分批止盈/推保本损)",
+                "entry": "-",
+                "stop_loss": "保本推损",
+                "target": "0.6780 (终极目标 TP2)",
+                "logic": "触及 0.6840 前低支撑带，分批止盈并移动止损保护盈利。"
+            },
+            {
+                "id": "AUDUSD_SL",
+                "type": "STOP_LOSS",
+                "condition": lambda p: p >= 0.6990,
+                "label": "触及严格防守止损位",
+                "action": "STOP LOSS (止损离场/严禁加仓)",
+                "entry": "-",
+                "stop_loss": "0.6990",
+                "target": "-",
+                "logic": "突破 0.6990 关键阻力，跌势受阻，严格执行止损！"
+            }
+        ]
+    },
+    "USDJPY=X": {
+        "name": "USD/JPY (美元/日元)",
+        "status": "ACTIVE",
+        "rules": [
+            {
+                "id": "USDJPY_BUY",
+                "type": "BUY_ZONE",
+                "condition": lambda p: p <= 158.10,
+                "label": "到达利差套息回踩多入场带",
+                "action": "BUY (回踩支撑接多)",
+                "entry": "157.80 - 158.10",
+                "stop_loss": "157.30",
+                "target": "158.90 (TP1) / 159.60 (TP2)",
+                "logic": "利差套息多单，回踩支撑接多。"
+            },
+            {
+                "id": "USDJPY_TP1",
+                "type": "TAKE_PROFIT",
+                "condition": lambda p: p >= 158.90,
+                "label": "触及第一目标止盈区 (TP1)",
+                "action": "TAKE PROFIT (分批止盈/推保本损)",
+                "entry": "-",
+                "stop_loss": "保本推损",
+                "target": "159.60 (终极目标 TP2)",
+                "logic": "反弹测试 158.90 前高强压，建议减仓 50%+，保护利润。"
+            },
+            {
+                "id": "USDJPY_SL",
+                "type": "STOP_LOSS",
+                "condition": lambda p: p <= 157.30,
+                "label": "触及严格防守止损位",
+                "action": "STOP LOSS (止损离场/严禁加仓)",
+                "entry": "-",
+                "stop_loss": "157.30",
+                "target": "-",
+                "logic": "跌破 157.30 平台支撑，利差多头动能减弱，严格止损观望！"
+            }
+        ]
+    },
+    "GBPUSD=X": {
+        "name": "GBP/USD (英镑/美元)",
+        "status": "ACTIVE",
+        "rules": [
+            {
+                "id": "GBPUSD_SELL",
+                "type": "SELL_ZONE",
+                "condition": lambda p: p >= 1.3410,
+                "label": "到达扫损后反弹做空入场带",
+                "action": "SELL (顺势反弹做空)",
+                "entry": "1.3410 - 1.3435",
+                "stop_loss": "1.3480",
+                "target": "1.3320 (TP1) / 1.3250 (TP2)",
+                "logic": "假突破扫损后暴跌，顺势反弹空。"
+            },
+            {
+                "id": "GBPUSD_TP1",
+                "type": "TAKE_PROFIT",
+                "condition": lambda p: p <= 1.3320,
+                "label": "触及第一目标止盈区 (TP1)",
+                "action": "TAKE PROFIT (分批止盈/推保本损)",
+                "entry": "-",
+                "stop_loss": "保本推损",
+                "target": "1.3250 (终极目标 TP2)",
+                "logic": "空头到达 1.3320 第一目标，减半仓并严格推保本损。"
+            },
+            {
+                "id": "GBPUSD_SL",
+                "type": "STOP_LOSS",
+                "condition": lambda p: p >= 1.3480,
+                "label": "触及严格防守止损位",
+                "action": "STOP LOSS (止损离场/严禁加仓)",
+                "entry": "-",
+                "stop_loss": "1.3480",
+                "target": "-",
+                "logic": "再度升破 1.3480 阻力区，空头结构瓦解，坚决止损离场！"
+            }
+        ]
+    },
+    "EURUSD=X": {
+        "name": "EUR/USD (欧元/美元)",
+        "status": "ACTIVE",
+        "rules": [
+            {
+                "id": "EURUSD_SELL",
+                "type": "SELL_ZONE",
+                "condition": lambda p: p >= 1.1185,
+                "label": "到达反抽供给区高空入场带",
+                "action": "SELL (反抽1.1200空)",
+                "entry": "1.1185 - 1.1215",
+                "stop_loss": "1.1255",
+                "target": "1.1100 (TP1) / 1.1030 (TP2)",
+                "logic": "供给区承压破位，反抽1.1200空。"
+            },
+            {
+                "id": "EURUSD_TP1",
+                "type": "TAKE_PROFIT",
+                "condition": lambda p: p <= 1.1100,
+                "label": "触及第一目标止盈区 (TP1)",
+                "action": "TAKE PROFIT (分批止盈/推保本损)",
+                "entry": "-",
+                "stop_loss": "保本推损",
+                "target": "1.1030 (终极目标 TP2)",
+                "logic": "到达 1.1100 整数关口目标，锁定部分利润并移动止损保护。"
+            },
+            {
+                "id": "EURUSD_SL",
+                "type": "STOP_LOSS",
+                "condition": lambda p: p >= 1.1255,
+                "label": "触及严格防守止损位",
+                "action": "STOP LOSS (止损离场/严禁加仓)",
+                "entry": "-",
+                "stop_loss": "1.1255",
+                "target": "-",
+                "logic": "打穿 1.1255 供给区上限，多头持续强势，必须严格止损！"
+            }
+        ]
+    },
+    "USDCHF=X": {
+        "name": "USD/CHF (美元/瑞郎)",
+        "status": "ACTIVE",
+        "rules": [
+            {
+                "id": "USDCHF_BUY",
+                "type": "BUY_ZONE",
+                "condition": lambda p: p <= 0.8185,
+                "label": "到达低位轻仓试多入场带",
+                "action": "BUY (低位轻仓试多)",
+                "entry": "0.8160 - 0.8185",
+                "stop_loss": "0.8120",
+                "target": "0.8240 (TP1) / 0.8300 (TP2)",
+                "logic": "地缘避险压制，低位轻仓试多。"
+            },
+            {
+                "id": "USDCHF_TP1",
+                "type": "TAKE_PROFIT",
+                "condition": lambda p: p >= 0.8240,
+                "label": "触及第一目标止盈区 (TP1)",
+                "action": "TAKE PROFIT (分批止盈/推保本损)",
+                "entry": "-",
+                "stop_loss": "保本推损",
+                "target": "0.8300 (终极目标 TP2)",
+                "logic": "反弹到达 0.8240 阶段压力，建议止盈半仓，剩余仓位看至 0.8300。"
+            },
+            {
+                "id": "USDCHF_SL",
+                "type": "STOP_LOSS",
+                "condition": lambda p: p <= 0.8120,
+                "label": "触及严格防守止损位",
+                "action": "STOP LOSS (止损离场/严禁加仓)",
+                "entry": "-",
+                "stop_loss": "0.8120",
+                "target": "-",
+                "logic": "击穿 0.8120 极值低点，避险强抛压未止，严格止损离场！"
+            }
+        ]
+    },
+    "EURGBP=X": {
+        "name": "EUR/GBP (欧元/英镑)",
+        "status": "ACTIVE",
+        "rules": [
+            {
+                "id": "EURGBP_SELL",
+                "type": "SELL_ZONE",
+                "condition": lambda p: p >= 0.8365,
+                "label": "到达超卖通道阻力做空入场带",
+                "action": "SELL (阻力短空)",
+                "entry": "0.8365 - 0.8385",
+                "stop_loss": "0.8415",
+                "target": "0.8315 (TP1) / 0.8280 (TP2)",
+                "logic": "深度超卖通道，阻力短空。"
+            },
+            {
+                "id": "EURGBP_TP1",
+                "type": "TAKE_PROFIT",
+                "condition": lambda p: p <= 0.8315,
+                "label": "触及第一目标止盈区 (TP1)",
+                "action": "TAKE PROFIT (分批止盈/推保本损)",
+                "entry": "-",
+                "stop_loss": "保本推损",
+                "target": "0.8280 (终极目标 TP2)",
+                "logic": "触及 0.8315 超卖下沿，注意减仓并严格保本推损。"
+            },
+            {
+                "id": "EURGBP_SL",
+                "type": "STOP_LOSS",
+                "condition": lambda p: p >= 0.8415,
+                "label": "触及严格防守止损位",
+                "action": "STOP LOSS (止损离场/严禁加仓)",
+                "entry": "-",
+                "stop_loss": "0.8415",
+                "target": "-",
+                "logic": "升破 0.8415 阻力平台，下行通道被打破，坚决止损！"
             }
         ]
     }
